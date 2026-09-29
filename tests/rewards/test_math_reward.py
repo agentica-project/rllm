@@ -169,6 +169,25 @@ class TestMathReward:
         assert not output.is_correct
         assert output.reward == 0.0
 
+    def test_empty_boxed_answer_not_rewarded(self):
+        """Test that an empty \\boxed{} model answer does not receive a reward,
+        even when the ground truth is also empty. See GitHub issue #929."""
+        reward = RewardMathFn(RewardConfig())
+
+        # Case 1: empty \boxed{} with empty ground truth — should NOT get full reward
+        task_info = {"problem": "Some problem", "problem_type": RewardType.MATH, "data_source": "test", "ground_truth": ""}
+        model_response = "<think>I don't know</think>\nThe answer is \\boxed{}."
+        output = reward(task_info, model_response)
+        assert not output.is_correct
+        assert output.reward == 0.0  # format_error_reward, not correct_reward
+
+        # Case 2: empty \boxed{} with a valid ground truth — should NOT get full reward
+        task_info = {"problem": "What is 2 + 2?", "problem_type": RewardType.MATH, "data_source": "test", "ground_truth": "4"}
+        model_response = "<think>I give up</think>\nThe answer is \\boxed{}."
+        output = reward(task_info, model_response)
+        assert not output.is_correct
+        assert output.reward == 0.0
+
     def test_custom_config_values(self):
         """Test math reward with custom configuration values."""
         config = RewardConfig()
