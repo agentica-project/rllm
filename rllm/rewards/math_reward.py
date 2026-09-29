@@ -57,7 +57,7 @@ class RewardMathFn:
             model_solution = model_response
 
         model_answer = extract_answer(model_solution)
-        if model_answer is None:
+        if not model_answer:  # None or empty string (e.g., empty \boxed{})
             return RewardOutput(reward=self.config.format_error_reward, is_correct=False)
 
         # Process the ground truth(s)
@@ -75,10 +75,11 @@ class RewardMathFn:
             truth = str(truth)
             if "\\boxed" in truth:
                 processed_truth = extract_answer(truth)
-                if processed_truth is not None:
+                if processed_truth:  # not None and not empty
                     processed_ground_truths.append(processed_truth)
             else:
-                processed_ground_truths.append(truth)
+                if truth.strip():  # skip empty ground truths
+                    processed_ground_truths.append(truth)
 
         if not processed_ground_truths:
             return RewardOutput(reward=self.config.unk_error_reward, is_correct=False)
